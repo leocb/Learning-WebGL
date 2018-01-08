@@ -2,15 +2,6 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
 
 
-
-//Create buffers
-let globalPositions = [
-	1.0, 1.0,
-	-1.0, 1.0,
-	1.0, -1.0,
-	-1.0, -1.0
-]
-
 //
 // Main program
 //
@@ -92,7 +83,12 @@ function initBuffers(gl) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
 	// Now create an array of positions for the square.
-	const positions = globalPositions
+	const positions = [
+		1.0, 1.0,
+		-1.0, 1.0,
+		1.0, -1.0,
+		-1.0, -1.0
+	]
 
 	// Now pass the list of positions into WebGL to build the shape.
 	// We do this by creating a Float32Array from the JavaScript array
