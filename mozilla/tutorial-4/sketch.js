@@ -1,6 +1,9 @@
 // Tutorial link:
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Animating_objects_with_WebGL
 
+// Global Vars
+let squareRotation = 0.0
+
 
 //
 // Main program
@@ -66,6 +69,7 @@ function main() {
 		attribLocations: {
 			vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
 			vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
+
 		},
 		uniformLocations: {
 			projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
@@ -76,10 +80,25 @@ function main() {
 	//Initialize square positions buffer
 	const buffers = initBuffers(gl)
 
-	drawScene(gl, programInfo, buffers)
+
+	//Animation (frame refresh)
+	let lastFrameTime = 0 // then
+
+	//Draw the scene repeatedly
+	function render(thisFrameTime) { // thisFrameTime is passed by requestAnimationFrame, it's the time in milliseconds since the page loaded.
+		thisFrameTime *= 0.001 // Convert from milliseconds to seconds
+		const deltaTime = thisFrameTime - lastFrameTime
+		lastFrameTime = thisFrameTime
+
+		squareRotation += deltaTime
+
+		drawScene(gl, programInfo, buffers)
+
+		requestAnimationFrame(render)
+	}
+
+	requestAnimationFrame(render)
 }
-
-
 function initBuffers(gl) {
 
 	// Create an array of positions for the square.
@@ -154,6 +173,8 @@ function drawScene(gl, programInfo, buffers) {
 	// as the destination to receive the result
 	mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar)
 
+
+
 	// Set the drawing position to the "identity" point, which is
 	// the center of the scene.
 	const modelViewMatrix = mat4.create();
@@ -164,6 +185,16 @@ function drawScene(gl, programInfo, buffers) {
 		modelViewMatrix,	// Source matrix
 		[-0.0, 0.0, -6.0]	// amount to translate
 	)
+
+	// After translating, rotate the square
+	mat4.rotate(
+		modelViewMatrix, // Destination
+		modelViewMatrix, // Source
+		squareRotation,  // Amount to rotate (in radians)
+		[0, 0, 1]		 // Axis to rotate around
+	)
+
+
 
 	// Tell WebGL how to pull out the positions from the position buffer
 	// into the vertexPosition attribute
