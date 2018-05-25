@@ -66,3 +66,21 @@ function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
 
   obj.rotateOnAxis(axis, theta); // rotate the OBJECT
 }
+
+
+/**
+ * Generate the cubemap Url's
+ * 
+ * @param {any} prefix main image path
+ * @param {any} postfix usually the image format
+ * @returns 
+ */
+var genCubeUrls = function (prefix, postfix) {
+
+  return [
+    prefix + 'px' + postfix, prefix + 'nx' + postfix,
+    prefix + 'py' + postfix, prefix + 'ny' + postfix,
+    prefix + 'pz' + postfix, prefix + 'nz' + postfix
+  ];
+
+};
