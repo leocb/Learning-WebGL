@@ -2,7 +2,7 @@
 let PI = 3.1415926535897932384626433827950488
 let TWO_PI = PI * 2
 let HALF_PI = PI / 2
-
+/*
 // Mouse screen position - thanks to: https://stackoverflow.com/a/7790764/8908827
 window.mouse = {
   x: 0,
@@ -30,7 +30,7 @@ function handleMouseMove(event) {
     y: event.pageY
   }
 };
-
+*/
 
 // Mouse Raycaster! - thanks to: https://stackoverflow.com/a/30871007/8908827
 // mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;

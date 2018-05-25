@@ -15,6 +15,75 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap // default THREE.PCFShadowMap
 document.body.appendChild(renderer.domElement)
 
 
+
+// Settings
+let toneMappingOptions = {
+  None: THREE.NoToneMapping,
+  Linear: THREE.LinearToneMapping,
+  Reinhard: THREE.ReinhardToneMapping,
+  Uncharted2: THREE.Uncharted2ToneMapping,
+  Cineon: THREE.CineonToneMapping
+};
+
+let toneMappingParams = {
+  exposure: 1.34,
+  whitePoint: 5.4,
+  toneMapping: 'Uncharted2'
+};
+
+let bloomParams = {
+  threshold: 0.72,
+  strength: 0.52,
+  radius: 0.01
+}
+
+var saoParams = {
+  output: 0,
+  saoBias: 0.5,
+  saoBlur: true,
+  saoBlurDepthCutoff: 0.00486,
+  saoBlurRadius: 7,
+  saoBlurStdDev: 6,
+  saoIntensity: 0.0018,
+  saoKernelRadius: 100,
+  saoMinResolution: 0,
+  saoScale: 1
+}
+
+let gui = new dat.GUI();
+
+let bloomGui = gui.addFolder('Unreal 4 Bloom');
+let toneMappingGui = gui.addFolder('ToneMapping');
+let saoGui = gui.addFolder('SAO');
+
+toneMappingGui.add(toneMappingParams, 'exposure', 0.0, 3.0);
+toneMappingGui.add(toneMappingParams, 'whitePoint', 0.0, 10.0);
+toneMappingGui.add(toneMappingParams, 'toneMapping', Object.keys(toneMappingOptions));
+
+bloomGui.add(bloomParams, 'threshold', 0.0, 1.0);
+bloomGui.add(bloomParams, 'strength', 0.0, 5.0);
+bloomGui.add(bloomParams, 'radius', 0.0, 2.0);
+
+saoGui.add(saoParams, 'output', {
+  'Beauty': THREE.SAOPass.OUTPUT.Beauty,
+  'Beauty+SAO': THREE.SAOPass.OUTPUT.Default,
+  'SAO': THREE.SAOPass.OUTPUT.SAO,
+  'Depth': THREE.SAOPass.OUTPUT.Depth,
+  'Normal': THREE.SAOPass.OUTPUT.Normal
+})
+saoGui.add(saoParams, 'saoBias', -1, 1);
+saoGui.add(saoParams, 'saoIntensity', 0, 1);
+saoGui.add(saoParams, 'saoScale', 0, 10);
+saoGui.add(saoParams, 'saoKernelRadius', 1, 100);
+saoGui.add(saoParams, 'saoBlur');
+saoGui.add(saoParams, 'saoBlurRadius', 0, 200);
+saoGui.add(saoParams, 'saoBlurStdDev', 0.5, 150);
+saoGui.add(saoParams, 'saoBlurDepthCutoff', 0.0, 0.1);
+
+gui.open()
+saoGui.open()
+
+
 // Scene
 let scene = new THREE.Scene()
 //scene.fog = new THREE.FogExp2('#afbbcd', 0.4)
@@ -32,7 +101,7 @@ let helper = {
 // setup camera
 let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000)
 camera.position.z = 1.2
-let controls = new THREE.OrbitControls(camera);
+let controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.minAzimuthAngle = -(PI / 3)
 controls.maxAzimuthAngle = PI / 3
 controls.minPolarAngle = HALF_PI - HALF_PI / 4
@@ -49,55 +118,21 @@ renderScene = new THREE.RenderPass(scene, camera);
 effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
 effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
 
-bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85); //1.0, 9, 0.5, 512);
+bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), bloomParams.strength, bloomParams.radius, bloomParams.threshold);
 bloomPass.renderToScreen = true;
+
+let saoPass = new THREE.SAOPass(scene, camera, true, true);
+saoPass.renderToScreen = true;
 
 composer = new THREE.EffectComposer(renderer);
 composer.setSize(window.innerWidth, window.innerHeight);
 composer.addPass(renderScene);
 composer.addPass(effectFXAA);
 composer.addPass(bloomPass);
+//composer.addPass(saoPass);
 
-renderer.gammaInput = true;
-renderer.gammaOutput = true;
-
-// Settings
-var toneMappingOptions = {
-  None: THREE.NoToneMapping,
-  Linear: THREE.LinearToneMapping,
-  Reinhard: THREE.ReinhardToneMapping,
-  Uncharted2: THREE.Uncharted2ToneMapping,
-  Cineon: THREE.CineonToneMapping
-};
-
-let toneMappingParams = {
-  exposure: 0.5,
-  whitePoint: 5.0,
-  toneMapping: 3
-};
-
-let bloomParams = {
-  threshold: 0.94,
-  strength: 0.3,
-  radius: 0.1
-}
-
-var gui = new dat.GUI();
-
-var bloomGui = gui.addFolder('Unreal 4 Bloom');
-var toneMappingGui = gui.addFolder('ToneMapping');
-
-toneMappingGui.add(toneMappingParams, 'exposure', 0.0, 10.0);
-toneMappingGui.add(toneMappingParams, 'whitePoint', 0.0, 10.0);
-toneMappingGui.add(toneMappingParams, 'toneMapping', toneMappingOptions);
-
-bloomGui.add(bloomParams, 'threshold', 0.0, 1.0);
-bloomGui.add(bloomParams, 'strength', 0.0, 5.0);
-bloomGui.add(bloomParams, 'radius', 0.0, 2.0);
-
-gui.open()
-
-
+renderer.gammaInput = false;
+renderer.gammaOutput = false;
 
 
 
@@ -229,7 +264,6 @@ loader.load('model/klima2.json',
 
   // onLoad callback
   function (geometry, materials) {
-
     cond = new THREE.Mesh(geometry, standardMaterial);
     cond.castShadow = true; //default is false
     cond.receiveShadow = true; //default
@@ -261,6 +295,7 @@ function onWindowResize() {
 // Render loop
 function animate() {
   requestAnimationFrame(animate);
+  composer.render();
 
   // Settings
 
@@ -270,10 +305,24 @@ function animate() {
   bloomPass.radius = bloomParams.radius;
 
   renderer.toneMappingExposure = toneMappingParams.exposure;
-  renderer.toneMapping = toneMappingParams.toneMapping;
-  renderer.whitePoint = toneMappingParams.whitePoint;
+  renderer.toneMappingWhitePoint = toneMappingParams.whitePoint;
 
+  renderScene.toneMappingExposure = toneMappingParams.exposure;
+  renderScene.toneMappingWhitePoint = toneMappingParams.whitePoint;
 
-  composer.render();
+  saoPass.params = saoParams
+
+  if (renderer.toneMapping !== toneMappingOptions[toneMappingParams.toneMapping]) {
+    renderer.toneMapping = toneMappingOptions[toneMappingParams.toneMapping];
+    renderScene.toneMapping = toneMappingOptions[toneMappingParams.toneMapping];
+    if (groundplaneMaterial) groundplaneMaterial.needsUpdate = true;
+    if (wallplaneMaterial) wallplaneMaterial.needsUpdate = true;
+    if (standardMaterial) standardMaterial.needsUpdate = true;
+    renderScene.needsUpdate = true
+    bloomPass.needsUpdate = true
+    renderer.needsUpdate = true
+    bloomPass.needsUpdate = true
+  }
+
 }
 animate();
