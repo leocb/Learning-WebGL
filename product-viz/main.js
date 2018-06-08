@@ -199,7 +199,11 @@ let groundplaneMaterial = new THREE.MeshStandardMaterial({
 
 // HDR Skybox
 let hdrUrls = genCubeUrls('./textures/woodenLoungeHDR/', '.hdr');
-// let hdrUrls = genCubeUrls('./textures/pisaHDR/', '.hdr');
+// how to create cubemaps from hdri panorama:
+// https://eleni.mutantstargoat.com/hikiko/2017/07/28/creating-cube-maps-from-hdr-images/
+// panoramas here:
+// https://hdrihaven.com/
+
 let newEnvMap
 new THREE.HDRCubeTextureLoader().load(THREE.UnsignedByteType, hdrUrls, function (hdrCubeMap) {
 
